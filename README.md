@@ -1,4 +1,3 @@
-Readme
 
 Formula 1 Podium Finish Prediction (ML Assignment 2)
 1. Problem Statement
@@ -12,7 +11,7 @@ Multiple CSV files were used, primarily:
 * results.csv
 * races.csv
 Data Preparation
-Raw race result data was merged with race metadata to create a single tabular dataset suitable for classification. A new target variable was engineered based on finishing position.
+Raw race result data was merged with race metadata to create a single tabular dataset suitable for classification.A new target variable was engineered based on finishing position.
 Target Variable
 Podium Finish (podium_finish)
 * 1 → Driver finished in positions 1–3
@@ -45,20 +44,36 @@ The final processed dataset is stored as:
 data/processed/f1_podium_classification.csv
 
 5. Project Structure (So Far)
-
 ML_Assignment2/
 │
-│── prepare_data.py
+├── app.py
+├── README.md
+├── requirements.txt
+├── .gitignore
 │
-│── data/
+├── data/
 │   ├── raw/
-│   │   ├── results.csv
-│   │   └── races.csv
-│   │
+│   │   ├── circuits.csv
+│   │   ├── constructors.csv
+│   │   ├── races.csv
+│   │   │
 │   └── processed/
-│       └── f1_podium_classification.csv
-* prepare_data.py handles dataset merging, target creation, feature selection, and cleaning.
-* Raw data is preserved separately from processed data to maintain data integrity.
+│       └── f1_top10_classification.csv
+│
+├── Scripts/
+│   └── prepare_data.py
+│
+├── model/
+│
+└── outputs/
+
+* prepare_data.py handles dataset merging, target variable creation, feature selection, and data cleaning.
+* Raw data files are preserved separately under data/raw/ to maintain data integrity and reproducibility.
+* The cleaned and processed dataset used for model training is stored under data/processed/.
+* The model/ directory is reserved for storing trained machine learning models.
+* The outputs/ directory will store evaluation results such as metrics tables and plots.
+* app.py will contain the Streamlit application code.
+* requirements.txt lists all project dependencies required for deployment.
 
 6. Next Steps (To Be Implemented)
 * Encoding of categorical features
