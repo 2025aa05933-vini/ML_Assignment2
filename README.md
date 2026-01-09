@@ -56,9 +56,12 @@ ML_Assignment2/
 │   │   ├── circuits.csv
 │   │   ├── constructors.csv
 │   │   ├── races.csv
-│   │   │
+│   │   └── results.csv
+│   │
 │   └── processed/
 │       └── f1_top10_classification.csv
+│       └── f1_train.csv
+│       └── f1_test.csv
 │
 ├── Scripts/
 │   └── prepare_data.py
@@ -66,7 +69,6 @@ ML_Assignment2/
 ├── model/
 │
 └── outputs/
-
 * prepare_data.py handles dataset merging, target variable creation, feature selection, and data cleaning.
 * Raw data files are preserved separately under data/raw/ to maintain data integrity and reproducibility.
 * The cleaned and processed dataset used for model training is stored under data/processed/.

@@ -1,4 +1,6 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
+
 # 1. Loading Raw Datasets   
 results = pd.read_csv("data/raw/results.csv")
 races = pd.read_csv("data/raw/races.csv")
@@ -48,6 +50,49 @@ final_df.to_csv(
     index=False
 )
 
-print("Dataset prepared successfully!")
-print("Final shape:", final_df.shape)
+# 8. Train-test split (95% train, 5% test)
+X = final_df.drop("podium_finish", axis=1)
+y = final_df["podium_finish"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.05,
+    random_state=42,
+    stratify=y
+)
+
+# Combine features and target back
+X = final_df.drop("podium_finish", axis=1)
+y = final_df["podium_finish"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.05,
+    random_state=42,
+    stratify=y
+)
+
+# 9. Combine features and target back
+train_df = pd.concat([X_train, y_train], axis=1)
+test_df = pd.concat([X_test, y_test], axis=1)
+
+# 10. Save train and test datasets
+train_df.to_csv(
+    "data/processed/f1_train.csv",
+    index=False
+)
+
+test_df.to_csv(
+    "data/processed/f1_test.csv",
+    index=False
+)
+
+# 11. Logs
+print("Dataset preparation completed successfully!")
+print("Full dataset shape:", final_df.shape)
+print("Train dataset shape:", train_df.shape)
+print("Test dataset shape:", test_df.shape)
+print("\nSample rows:")
 print(final_df.head())
