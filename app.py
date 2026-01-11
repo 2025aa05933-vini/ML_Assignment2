@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import matplotlib.pyplot as plt
 
 from sklearn.metrics import (
     accuracy_score,
@@ -10,7 +11,8 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
-    matthews_corrcoef
+    matthews_corrcoef,
+    confusion_matrix
 )
 
 # -------------------------------------------------
@@ -65,15 +67,16 @@ st.subheader("📄 Dataset Preview")
 st.dataframe(df.head())
 
 # -------------------------------------------------
-# Target selection
+# Fixed target column
 # -------------------------------------------------
-target_col = st.selectbox(
-    "Select Target Column",
-    df.columns
-)
+TARGET_COL = "podium_finish"
 
-X = df.drop(columns=[target_col])
-y_true = df[target_col]
+if TARGET_COL not in df.columns:
+    st.error(f"❌ Required target column '{TARGET_COL}' not found in dataset.")
+    st.stop()
+
+X = df.drop(columns=[TARGET_COL])
+y_true = df[TARGET_COL]
 
 # -------------------------------------------------
 # Basic validation
@@ -117,5 +120,34 @@ if st.button("🚀 Evaluate Model"):
     st.table(
         pd.DataFrame(results.items(), columns=["Metric", "Value"]).round(4)
     )
+
+    # -------------------------------------------------
+    # Confusion Matrix
+    # -------------------------------------------------
+    cm = confusion_matrix(y_true, y_pred)
+
+    st.subheader("🧩 Confusion Matrix")
+
+    cm_df = pd.DataFrame(
+        cm,
+        index=["Actual 0", "Actual 1"],
+        columns=["Predicted 0", "Predicted 1"]
+    )
+
+    st.table(cm_df)
+
+    # Heatmap
+    fig, ax = plt.subplots()
+    ax.imshow(cm)
+
+    for i in range(2):
+        for j in range(2):
+            ax.text(j, i, cm[i, j], ha="center", va="center")
+
+    ax.set_xlabel("Predicted Label")
+    ax.set_ylabel("True Label")
+    ax.set_title("Confusion Matrix")
+
+    st.pyplot(fig)
 
     st.success("✅ Evaluation completed successfully!")
