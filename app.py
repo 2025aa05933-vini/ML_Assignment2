@@ -13,66 +13,41 @@ from sklearn.metrics import (
     matthews_corrcoef
 )
 
-# -------------------------------------------------
-# Page Config
-# -------------------------------------------------
-st.set_page_config(page_title="ML Model Evaluation", layout="centered")
+st.set_page_config(page_title="ML Model Evaluation App")
 st.title("📊 ML Model Evaluation App")
 
 st.write(
-    """
-    Upload a CSV file, select a trained model, and evaluate it using
-    Accuracy, AUC, Precision, Recall, F1 Score, and MCC.
-    """
+    "Select a model first, then upload a CSV file to evaluate it."
 )
 
-# -------------------------------------------------
-# Model Selection
-# -------------------------------------------------
+# ---------------- Model selection FIRST ----------------
 model_choice = st.selectbox(
     "Select Model",
     [
         "Logistic Regression",
         "Decision Tree Classifier",
         "K-Nearest Neighbor Classifier",
+        "Naive Bayes - Gaussian",
         "Naive Bayes - Multinomial",
         "Random Forest Classifier",
         "XGBoost Classifier"
     ]
 )
 
-# -------------------------------------------------
-# Model Paths
-# -------------------------------------------------
 MODEL_DIR = "models"
-
 MODEL_PATHS = {
     "Logistic Regression": "logistic_regression.pkl",
     "Decision Tree Classifier": "decision_tree.pkl",
     "K-Nearest Neighbor Classifier": "knn.pkl",
+    "Naive Bayes - Gaussian": "gaussian_nb.pkl",
     "Naive Bayes - Multinomial": "multinomial_nb.pkl",
     "Random Forest Classifier": "random_forest.pkl",
     "XGBoost Classifier": "xgboost.pkl"
 }
 
-MODEL_PATH = os.path.join(MODEL_DIR, MODEL_PATHS[model_choice])
+model_path = os.path.join(MODEL_DIR, MODEL_PATHS[model_choice])
 
-# -------------------------------------------------
-# Load Model
-# -------------------------------------------------
-@st.cache_resource
-def load_model(path):
-    return joblib.load(path)
-
-try:
-    model = load_model(MODEL_PATH)
-except Exception as e:
-    st.error(f"❌ Could not load model: {e}")
-    st.stop()
-
-# -------------------------------------------------
-# Upload CSV
-# -------------------------------------------------
+# ---------------- CSV upload AFTER model ----------------
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
 if uploaded_file is None:
@@ -84,68 +59,38 @@ df = pd.read_csv(uploaded_file)
 st.subheader("📄 Dataset Preview")
 st.dataframe(df.head())
 
-# -------------------------------------------------
-# Target Selection
-# -------------------------------------------------
+# ---------------- Target selection ----------------
 target_col = st.selectbox("Select Target Column", df.columns)
 
 X = df.drop(columns=[target_col])
 y_true = df[target_col]
 
-# -------------------------------------------------
-# Prediction
-# -------------------------------------------------
-try:
+# ---------------- Evaluate button ----------------
+if st.button("Evaluate Model"):
+    if not os.path.exists(model_path):
+        st.error(f"❌ Model file not found: {model_path}")
+        st.stop()
+
+    model = joblib.load(model_path)
+
     y_pred = model.predict(X)
 
-    # AUC Handling
     if hasattr(model, "predict_proba"):
         y_prob = model.predict_proba(X)[:, 1]
         auc_score = roc_auc_score(y_true, y_prob)
-    elif hasattr(model, "decision_function"):
-        y_score = model.decision_function(X)
-        auc_score = roc_auc_score(y_true, y_score)
     else:
         auc_score = np.nan
 
-except Exception as e:
-    st.error(f"❌ Prediction failed: {e}")
-    st.stop()
-
-# -------------------------------------------------
-# Metrics Calculation
-# -------------------------------------------------
-accuracy = accuracy_score(y_true, y_pred)
-precision = precision_score(y_true, y_pred, zero_division=0)
-recall = recall_score(y_true, y_pred, zero_division=0)
-f1 = f1_score(y_true, y_pred, zero_division=0)
-mcc = matthews_corrcoef(y_true, y_pred)
-
-# -------------------------------------------------
-# Display Metrics
-# -------------------------------------------------
-st.subheader("📈 Evaluation Metrics")
-
-metrics_df = pd.DataFrame(
-    {
-        "Metric": [
-            "Accuracy",
-            "AUC Score",
-            "Precision",
-            "Recall",
-            "F1 Score",
-            "Matthews Correlation Coefficient"
-        ],
-        "Value": [
-            accuracy,
-            auc_score,
-            precision,
-            recall,
-            f1,
-            mcc
-        ],
+    results = {
+        "Accuracy": accuracy_score(y_true, y_pred),
+        "AUC": auc_score,
+        "Precision": precision_score(y_true, y_pred, zero_division=0),
+        "Recall": recall_score(y_true, y_pred, zero_division=0),
+        "F1 Score": f1_score(y_true, y_pred, zero_division=0),
+        "MCC": matthews_corrcoef(y_true, y_pred),
     }
-)
 
-st.table(metrics_df.round(4))
-st.success("✅ Model evaluation completed successfully!")   
+    st.subheader("📈 Evaluation Metrics")
+    st.table(pd.DataFrame(results.items(), columns=["Metric", "Value"]).round(4))
+    st.success("✅ Evaluation complete!")
+    
