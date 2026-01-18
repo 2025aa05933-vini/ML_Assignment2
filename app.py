@@ -13,8 +13,7 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     matthews_corrcoef,
-    confusion_matrix,
-    classification_report
+    confusion_matrix
 )
 
 # -------------------------------------------------
@@ -167,24 +166,5 @@ if st.button("Evaluate Model"):
 
     st.pyplot(fig)
     plt.close(fig)
-
-    # -------------------------------------------------
-    # Classification Report (bonus)
-    # -------------------------------------------------
-    st.subheader("Classification Report")
-
-    report = classification_report(
-        y_true,
-        y_pred,
-        output_dict=True
-    )
-
-    report_df = (
-        pd.DataFrame(report)
-        .transpose()
-        .round(4)
-    )
-
-    st.dataframe(report_df)
 
     st.success("Model evaluation completed successfully!")
