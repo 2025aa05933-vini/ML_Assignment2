@@ -21,13 +21,13 @@ from sklearn.metrics import (
 # -------------------------------------------------
 st.set_page_config(
     page_title="ML Model Evaluation App",
-    layout="centered"
+    layout="wide"
 )
 
-st.title("ML Model Evaluation App")
-st.write(
-    "Upload **test data only** (CSV), select a trained model, "
-    "and view evaluation metrics and visualizations."
+st.title("📊 ML Model Evaluation App")
+st.caption(
+    "Upload **test data only**, select a trained model, "
+    "and evaluate performance using multiple metrics."
 )
 
 # -------------------------------------------------
@@ -44,43 +44,61 @@ MODEL_FILES = {
     "XGBoost": "models/xgboost.pkl"
 }
 
-# -------------------------------------------------
-# Sample Test File Download (BEFORE user input)
-# -------------------------------------------------
 SAMPLE_FILE_PATH = "data/processed/f1_test.csv"
 
-st.subheader("Sample Test File")
-
-try:
-    with open(SAMPLE_FILE_PATH, "rb") as f:
-        st.download_button(
-            label="Download Sample Test CSV",
-            data=f,
-            file_name="f1_test_sample.csv",
-            mime="text/csv"
-        )
-except FileNotFoundError:
-    st.warning(
-        f"Sample file not found at `{SAMPLE_FILE_PATH}`. "
-        "Please ensure the file exists."
-    )
-
 # -------------------------------------------------
-# Dataset upload (Requirement a)
+# Sidebar – Model Selection
 # -------------------------------------------------
-uploaded_file = st.file_uploader(
-    "Upload CSV file (TEST DATA ONLY)",
-    type=["csv"]
+st.sidebar.header("⚙️ Model Settings")
+
+selected_model_name = st.sidebar.selectbox(
+    "Select a trained model",
+    list(MODEL_FILES.keys())
 )
 
+st.sidebar.info(
+    "ℹ️ Upload **test data only**.\n"
+    "Training data should not be uploaded."
+)
+
+# -------------------------------------------------
+# Top Section – Sample + Upload
+# -------------------------------------------------
+st.markdown("---")
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("📥 Sample Test File")
+    try:
+        with open(SAMPLE_FILE_PATH, "rb") as f:
+            st.download_button(
+                label="Download Sample Test CSV",
+                data=f,
+                file_name="f1_test_sample.csv",
+                mime="text/csv"
+            )
+    except FileNotFoundError:
+        st.warning("Sample test file not found.")
+
+with col2:
+    st.subheader("📤 Upload Test Dataset")
+    uploaded_file = st.file_uploader(
+        "Upload CSV file (TEST DATA ONLY)",
+        type=["csv"]
+    )
+
 if uploaded_file is None:
-    st.info("Please upload a CSV file to continue.")
+    st.info("Please upload a CSV file to proceed.")
     st.stop()
 
+# -------------------------------------------------
+# Load & Preview Data
+# -------------------------------------------------
 df = pd.read_csv(uploaded_file)
 
-st.subheader("Uploaded Dataset Preview")
-st.dataframe(df.head())
+st.markdown("---")
+st.subheader("🔍 Dataset Preview")
+st.dataframe(df.head(), use_container_width=True)
 
 # -------------------------------------------------
 # Validation
@@ -97,59 +115,54 @@ if y_true.nunique() != 2:
     st.stop()
 
 # -------------------------------------------------
-# Model selection dropdown (Requirement b)
-# -------------------------------------------------
-st.subheader("Model Selection")
-
-selected_model_name = st.selectbox(
-    "Select a trained model",
-    list(MODEL_FILES.keys())
-)
-
-# -------------------------------------------------
 # Evaluation
 # -------------------------------------------------
-if st.button("Evaluate Model"):
+st.markdown("---")
+if st.button("🚀 Evaluate Model", use_container_width=True):
 
-    model_path = MODEL_FILES[selected_model_name]
-    model = joblib.load(model_path)
+    with st.spinner("Evaluating model..."):
+        model_path = MODEL_FILES[selected_model_name]
+        model = joblib.load(model_path)
 
-    # Predictions
-    y_pred = model.predict(X)
+        y_pred = model.predict(X)
 
-    if hasattr(model, "predict_proba"):
-        y_prob = model.predict_proba(X)[:, 1]
-        auc = roc_auc_score(y_true, y_prob)
-    else:
-        auc = np.nan
+        if hasattr(model, "predict_proba"):
+            y_prob = model.predict_proba(X)[:, 1]
+            auc = roc_auc_score(y_true, y_prob)
+        else:
+            auc = np.nan
 
-    # -------------------------------------------------
-    # Metrics table (Requirement c)
-    # -------------------------------------------------
-    st.subheader("Evaluation Metrics")
-
-    metrics = {
-        "Accuracy": accuracy_score(y_true, y_pred),
-        "AUC": auc,
-        "Precision": precision_score(y_true, y_pred, zero_division=0),
-        "Recall": recall_score(y_true, y_pred, zero_division=0),
-        "F1 Score": f1_score(y_true, y_pred, zero_division=0),
-        "MCC": matthews_corrcoef(y_true, y_pred)
-    }
-
-    metrics_df = (
-        pd.DataFrame.from_dict(metrics, orient="index", columns=["Value"])
-        .round(4)
-    )
-
-    st.table(metrics_df)
+        metrics = {
+            "Accuracy": accuracy_score(y_true, y_pred),
+            "AUC": auc,
+            "Precision": precision_score(y_true, y_pred, zero_division=0),
+            "Recall": recall_score(y_true, y_pred, zero_division=0),
+            "F1 Score": f1_score(y_true, y_pred, zero_division=0),
+            "MCC": matthews_corrcoef(y_true, y_pred)
+        }
 
     # -------------------------------------------------
-    # Metrics visualization (Matplotlib + Seaborn)
+    # Metrics Cards
     # -------------------------------------------------
-    st.subheader("Metrics Visualization")
+    st.subheader("📈 Evaluation Metrics")
 
-    fig, ax = plt.subplots(figsize=(6, 3))
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Accuracy", f"{metrics['Accuracy']:.3f}")
+    c2.metric("AUC", f"{metrics['AUC']:.3f}")
+    c3.metric("F1 Score", f"{metrics['F1 Score']:.3f}")
+
+    c4, c5, c6 = st.columns(3)
+    c4.metric("Precision", f"{metrics['Precision']:.3f}")
+    c5.metric("Recall", f"{metrics['Recall']:.3f}")
+    c6.metric("MCC", f"{metrics['MCC']:.3f}")
+
+    # -------------------------------------------------
+    # Metrics Visualization
+    # -------------------------------------------------
+    st.markdown("---")
+    st.subheader("📊 Metrics Visualization")
+
+    fig, ax = plt.subplots(figsize=(9, 4))
     sns.barplot(
         x=list(metrics.keys()),
         y=list(metrics.values()),
@@ -158,20 +171,21 @@ if st.button("Evaluate Model"):
 
     ax.set_ylim(0, 1)
     ax.set_ylabel("Score")
-    ax.set_title("Evaluation Metrics")
-    plt.xticks(rotation=30)
+    ax.set_title("Model Performance Metrics")
+    plt.xticks(rotation=25)
 
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
     plt.close(fig)
 
     # -------------------------------------------------
-    # Confusion Matrix (Requirement d)
+    # Confusion Matrix
     # -------------------------------------------------
-    st.subheader("Confusion Matrix")
+    st.markdown("---")
+    st.subheader("🧩 Confusion Matrix")
 
     cm = confusion_matrix(y_true, y_pred)
 
-    fig, ax = plt.subplots(figsize=(4, 3))
+    fig, ax = plt.subplots(figsize=(4, 4))
     sns.heatmap(
         cm,
         annot=True,
@@ -188,4 +202,4 @@ if st.button("Evaluate Model"):
     st.pyplot(fig)
     plt.close(fig)
 
-    st.success("Model evaluation completed successfully!")
+    st.success("✅ Model evaluation completed successfully!")
