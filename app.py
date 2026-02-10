@@ -45,16 +45,20 @@ MODEL_FILES = {
 }
 
 # -------------------------------------------------
-# Show Sample Test File (BEFORE user input)
+# Sample Test File Download (BEFORE user input)
 # -------------------------------------------------
 SAMPLE_FILE_PATH = "data/processed/f1_test.csv"
 
-st.subheader("Sample Test File Format")
+st.subheader("Sample Test File")
 
 try:
-    sample_df = pd.read_csv(SAMPLE_FILE_PATH)
-    st.write("Below is a sample test file showing the expected format:")
-    st.dataframe(sample_df.head())
+    with open(SAMPLE_FILE_PATH, "rb") as f:
+        st.download_button(
+            label="Download Sample Test CSV",
+            data=f,
+            file_name="f1_test_sample.csv",
+            mime="text/csv"
+        )
 except FileNotFoundError:
     st.warning(
         f"Sample file not found at `{SAMPLE_FILE_PATH}`. "
@@ -75,7 +79,7 @@ if uploaded_file is None:
 
 df = pd.read_csv(uploaded_file)
 
-st.subheader("Dataset Preview")
+st.subheader("Uploaded Dataset Preview")
 st.dataframe(df.head())
 
 # -------------------------------------------------
