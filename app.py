@@ -93,11 +93,11 @@ selected_model_name = st.sidebar.selectbox(
     list(MODEL_FILES.keys())
 )
 
-st.sidebar.caption(
-    "Only **test data** should be uploaded.\n\n"
-    "This dashboard evaluates **binary podium predictions** "
-    "(Podium / No Podium)."
-)
+# st.sidebar.caption(
+#     "Only **test data** should be uploaded.\n\n"
+#     "This dashboard evaluates **binary podium predictions** "
+#     "(Podium / No Podium)."
+# )
 
 # -------------------------------------------------
 # Input Section – Sample + Upload
