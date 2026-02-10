@@ -13,21 +13,22 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     matthews_corrcoef,
-    confusion_matrix
+    confusion_matrix,
+    roc_curve
 )
 
 # -------------------------------------------------
 # Streamlit configuration
 # -------------------------------------------------
 st.set_page_config(
-    page_title="ML Model Evaluation App",
+    page_title="F1 Podium Prediction – Model Evaluation",
     layout="wide"
 )
 
-st.title("📊 ML Model Evaluation App")
+st.title("🏎️ F1 Podium Prediction – ML Model Evaluation")
 st.caption(
-    "Upload **test data only**, select a trained model, "
-    "and evaluate performance using multiple metrics."
+    "Evaluate trained ML models for predicting **podium finishes** in Formula 1 "
+    "using robust classification metrics."
 )
 
 # -------------------------------------------------
@@ -57,8 +58,9 @@ selected_model_name = st.sidebar.selectbox(
 )
 
 st.sidebar.info(
-    "ℹ️ Upload **test data only**.\n"
-    "Training data should not be uploaded."
+    "ℹ️ **Test data only** should be uploaded.\n\n"
+    "This app evaluates pre-trained models for\n"
+    "**binary podium prediction (Yes / No)**."
 )
 
 # -------------------------------------------------
@@ -115,14 +117,25 @@ if y_true.nunique() != 2:
     st.stop()
 
 # -------------------------------------------------
+# Why these metrics? (F1-specific explanation)
+# -------------------------------------------------
+st.markdown("---")
+st.info(
+    "🏁 **Why F1-Score & MCC?**\n\n"
+    "- Podium finishes are **rare events** in Formula 1\n"
+    "- Accuracy is misleading due to **class imbalance**\n"
+    "- **F1-Score** balances Precision & Recall\n"
+    "- **MCC** measures true correlation across all outcomes"
+)
+
+# -------------------------------------------------
 # Evaluation
 # -------------------------------------------------
 st.markdown("---")
 if st.button("🚀 Evaluate Model", use_container_width=True):
 
     with st.spinner("Evaluating model..."):
-        model_path = MODEL_FILES[selected_model_name]
-        model = joblib.load(model_path)
+        model = joblib.load(MODEL_FILES[selected_model_name])
 
         y_pred = model.predict(X)
 
@@ -130,6 +143,7 @@ if st.button("🚀 Evaluate Model", use_container_width=True):
             y_prob = model.predict_proba(X)[:, 1]
             auc = roc_auc_score(y_true, y_prob)
         else:
+            y_prob = None
             auc = np.nan
 
         metrics = {
@@ -160,7 +174,7 @@ if st.button("🚀 Evaluate Model", use_container_width=True):
     # Metrics Visualization
     # -------------------------------------------------
     st.markdown("---")
-    st.subheader("📊 Metrics Visualization")
+    st.subheader("📊 Metrics Comparison")
 
     fig, ax = plt.subplots(figsize=(9, 4))
     sns.barplot(
@@ -176,6 +190,40 @@ if st.button("🚀 Evaluate Model", use_container_width=True):
 
     st.pyplot(fig, use_container_width=True)
     plt.close(fig)
+
+    # -------------------------------------------------
+    # ROC Curve
+    # -------------------------------------------------
+    if y_prob is not None:
+        st.markdown("---")
+        st.subheader("📉 ROC Curve")
+
+        fpr, tpr, _ = roc_curve(y_true, y_prob)
+
+        fig, ax = plt.subplots(figsize=(6, 5))
+        ax.plot(fpr, tpr, label=f"AUC = {auc:.3f}")
+        ax.plot([0, 1], [0, 1], linestyle="--")
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.set_title("ROC Curve")
+        ax.legend()
+
+        st.pyplot(fig)
+        plt.close(fig)
+
+    # -------------------------------------------------
+    # Feature Importance (Tree-based models)
+    # -------------------------------------------------
+    if hasattr(model, "feature_importances_"):
+        st.markdown("---")
+        st.subheader("🔍 Feature Importance")
+
+        fi_df = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": model.feature_importances_
+        }).sort_values(by="Importance", ascending=False)
+
+        st.bar_chart(fi_df.set_index("Feature").head(10))
 
     # -------------------------------------------------
     # Confusion Matrix
