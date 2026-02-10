@@ -11,7 +11,7 @@ The task involves:
 * Evaluating them using appropriate performance metrics
 * Comparing model performance and drawing insights
 
-The final outcome is a Streamlit-based application that loads pre-trained models and evaluates them consistently on the same test dataset.
+The final outcome is a Streamlit-b[ased application that loads pre-trained models and evaluates them consistently on the same test dataset.
 
 ---
 
