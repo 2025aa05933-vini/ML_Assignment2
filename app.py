@@ -171,7 +171,7 @@ st.caption(
 # Evaluation Trigger
 # -------------------------------------------------
 st.divider()
-if st.button("🚀 Run Model Evaluation", use_container_width=True):
+if st.button("🏎️ Run Model Evaluation", use_container_width=True):
 
     with st.spinner("Running race simulation..."):
         model = joblib.load(MODEL_FILES[selected_model_name])
