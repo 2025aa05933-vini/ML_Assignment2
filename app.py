@@ -45,6 +45,23 @@ MODEL_FILES = {
 }
 
 # -------------------------------------------------
+# Show Sample Test File (BEFORE user input)
+# -------------------------------------------------
+SAMPLE_FILE_PATH = "data/processed/f1_test.csv"
+
+st.subheader("Sample Test File Format")
+
+try:
+    sample_df = pd.read_csv(SAMPLE_FILE_PATH)
+    st.write("Below is a sample test file showing the expected format:")
+    st.dataframe(sample_df.head())
+except FileNotFoundError:
+    st.warning(
+        f"Sample file not found at `{SAMPLE_FILE_PATH}`. "
+        "Please ensure the file exists."
+    )
+
+# -------------------------------------------------
 # Dataset upload (Requirement a)
 # -------------------------------------------------
 uploaded_file = st.file_uploader(
