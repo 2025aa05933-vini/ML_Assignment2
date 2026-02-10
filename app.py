@@ -25,10 +25,45 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🏎️ F1 Podium Prediction – ML Model Evaluation")
+# -------------------------------------------------
+# F1 Dashboard CSS (Aesthetic only)
+# -------------------------------------------------
+st.markdown("""
+<style>
+/* Page padding */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Metric cards styling */
+div[data-testid="metric-container"] {
+    background-color: #1C1C1C;
+    border: 1px solid #E10600;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+/* Sidebar styling */
+section[data-testid="stSidebar"] {
+    background-color: #0F0F0F;
+}
+
+/* Center plots */
+.plot-container {
+    display: flex;
+    justify-content: center;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------
+# App Header (F1 branding)
+# -------------------------------------------------
+st.markdown("## 🏁 F1 Podium Prediction Dashboard")
 st.caption(
-    "Evaluate trained ML models for predicting **podium finishes** in Formula 1 "
-    "using robust classification metrics."
+    "Formula 1 • Machine Learning Model Evaluation • "
+    "Pre-trained models evaluated on unseen race data"
 )
 
 # -------------------------------------------------
@@ -48,33 +83,36 @@ MODEL_FILES = {
 SAMPLE_FILE_PATH = "data/processed/f1_test.csv"
 
 # -------------------------------------------------
-# Sidebar – Model Selection
+# Sidebar – Controls (Clean & minimal)
 # -------------------------------------------------
-st.sidebar.header("⚙️ Model Settings")
+st.sidebar.markdown("## ⚙️ Race Controls")
+st.sidebar.markdown("---")
 
 selected_model_name = st.sidebar.selectbox(
-    "Select a trained model",
+    "Select Model",
     list(MODEL_FILES.keys())
 )
 
-st.sidebar.info(
-    "ℹ️ **Test data only** should be uploaded.\n\n"
-    "This app evaluates pre-trained models for\n"
-    "**binary podium prediction (Yes / No)**."
+st.sidebar.caption(
+    "Only **test data** should be uploaded.\n\n"
+    "This dashboard evaluates **binary podium predictions** "
+    "(Podium / No Podium)."
 )
 
 # -------------------------------------------------
-# Top Section – Sample + Upload
+# Input Section – Sample + Upload
 # -------------------------------------------------
-st.markdown("---")
+st.divider()
+st.subheader("📥 Input Data")
+
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📥 Sample Test File")
+    st.markdown("**Sample Test File**")
     try:
         with open(SAMPLE_FILE_PATH, "rb") as f:
             st.download_button(
-                label="Download Sample Test CSV",
+                "Download Sample CSV",
                 data=f,
                 file_name="f1_test_sample.csv",
                 mime="text/csv"
@@ -83,23 +121,24 @@ with col1:
         st.warning("Sample test file not found.")
 
 with col2:
-    st.subheader("📤 Upload Test Dataset")
+    st.markdown("**Upload Test Dataset**")
     uploaded_file = st.file_uploader(
-        "Upload CSV file (TEST DATA ONLY)",
+        "CSV file (test data only)",
         type=["csv"]
     )
 
 if uploaded_file is None:
-    st.info("Please upload a CSV file to proceed.")
+    st.info("Upload a test CSV file to begin evaluation.")
     st.stop()
 
 # -------------------------------------------------
-# Load & Preview Data
+# Data Preview
 # -------------------------------------------------
 df = pd.read_csv(uploaded_file)
 
-st.markdown("---")
-st.subheader("🔍 Dataset Preview")
+st.divider()
+st.subheader("🔍 Race Data Snapshot")
+st.caption("Preview of uploaded test dataset (first 5 rows)")
 st.dataframe(df.head(), use_container_width=True)
 
 # -------------------------------------------------
@@ -117,24 +156,24 @@ if y_true.nunique() != 2:
     st.stop()
 
 # -------------------------------------------------
-# Why these metrics? (F1-specific explanation)
+# Metric Justification (F1-aware)
 # -------------------------------------------------
-st.markdown("---")
-st.info(
-    "🏁 **Why F1-Score & MCC?**\n\n"
-    "- Podium finishes are **rare events** in Formula 1\n"
-    "- Accuracy is misleading due to **class imbalance**\n"
-    "- **F1-Score** balances Precision & Recall\n"
-    "- **MCC** measures true correlation across all outcomes"
+st.divider()
+st.subheader("🏁 Metric Rationale")
+st.caption(
+    "Podium prediction is an **imbalanced classification problem**.\n\n"
+    "• Accuracy can be misleading\n"
+    "• F1-score balances precision & recall\n"
+    "• MCC captures overall prediction quality"
 )
 
 # -------------------------------------------------
-# Evaluation
+# Evaluation Trigger
 # -------------------------------------------------
-st.markdown("---")
-if st.button("🚀 Evaluate Model", use_container_width=True):
+st.divider()
+if st.button("🚀 Run Model Evaluation", use_container_width=True):
 
-    with st.spinner("Evaluating model..."):
+    with st.spinner("Running race simulation..."):
         model = joblib.load(MODEL_FILES[selected_model_name])
 
         y_pred = model.predict(X)
@@ -156,67 +195,66 @@ if st.button("🚀 Evaluate Model", use_container_width=True):
         }
 
     # -------------------------------------------------
-    # Metrics Cards
+    # Metric Cards
     # -------------------------------------------------
-    st.subheader("📈 Evaluation Metrics")
+    st.subheader("📈 Race Outcome Metrics")
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Accuracy", f"{metrics['Accuracy']:.3f}")
-    c2.metric("AUC", f"{metrics['AUC']:.3f}")
-    c3.metric("F1 Score", f"{metrics['F1 Score']:.3f}")
+    r1, r2, r3 = st.columns(3)
+    r1.metric("Accuracy", f"{metrics['Accuracy']:.3f}")
+    r2.metric("AUC", f"{metrics['AUC']:.3f}")
+    r3.metric("F1 Score", f"{metrics['F1 Score']:.3f}")
 
-    c4, c5, c6 = st.columns(3)
-    c4.metric("Precision", f"{metrics['Precision']:.3f}")
-    c5.metric("Recall", f"{metrics['Recall']:.3f}")
-    c6.metric("MCC", f"{metrics['MCC']:.3f}")
+    r4, r5, r6 = st.columns(3)
+    r4.metric("Precision", f"{metrics['Precision']:.3f}")
+    r5.metric("Recall", f"{metrics['Recall']:.3f}")
+    r6.metric("MCC", f"{metrics['MCC']:.3f}")
 
     # -------------------------------------------------
-    # Metrics Visualization
+    # Metrics Comparison Chart
     # -------------------------------------------------
-    st.markdown("---")
-    st.subheader("📊 Metrics Comparison")
+    st.divider()
+    st.subheader("📊 Performance Comparison")
 
-    fig, ax = plt.subplots(figsize=(9, 4))
-    sns.barplot(
-        x=list(metrics.keys()),
-        y=list(metrics.values()),
-        ax=ax
-    )
-
-    ax.set_ylim(0, 1)
-    ax.set_ylabel("Score")
-    ax.set_title("Model Performance Metrics")
-    plt.xticks(rotation=25)
-
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
+    _, mid, _ = st.columns([1, 6, 1])
+    with mid:
+        fig, ax = plt.subplots(figsize=(9, 4))
+        sns.barplot(
+            x=list(metrics.keys()),
+            y=list(metrics.values()),
+            ax=ax
+        )
+        ax.set_ylim(0, 1)
+        ax.set_ylabel("Score")
+        ax.set_title("Model Performance Metrics")
+        plt.xticks(rotation=25)
+        st.pyplot(fig)
+        plt.close(fig)
 
     # -------------------------------------------------
     # ROC Curve
     # -------------------------------------------------
     if y_prob is not None:
-        st.markdown("---")
-        st.subheader("📉 ROC Curve")
+        st.divider()
+        st.subheader("📉 Podium Probability Curve (ROC)")
 
-        fpr, tpr, _ = roc_curve(y_true, y_prob)
-
-        fig, ax = plt.subplots(figsize=(6, 5))
-        ax.plot(fpr, tpr, label=f"AUC = {auc:.3f}")
-        ax.plot([0, 1], [0, 1], linestyle="--")
-        ax.set_xlabel("False Positive Rate")
-        ax.set_ylabel("True Positive Rate")
-        ax.set_title("ROC Curve")
-        ax.legend()
-
-        st.pyplot(fig)
-        plt.close(fig)
+        _, mid, _ = st.columns([1, 5, 1])
+        with mid:
+            fpr, tpr, _ = roc_curve(y_true, y_prob)
+            fig, ax = plt.subplots(figsize=(6, 5))
+            ax.plot(fpr, tpr, label=f"AUC = {auc:.3f}")
+            ax.plot([0, 1], [0, 1], linestyle="--")
+            ax.set_xlabel("False Positive Rate")
+            ax.set_ylabel("True Positive Rate")
+            ax.legend()
+            st.pyplot(fig)
+            plt.close(fig)
 
     # -------------------------------------------------
-    # Feature Importance (Tree-based models)
+    # Feature Importance
     # -------------------------------------------------
     if hasattr(model, "feature_importances_"):
-        st.markdown("---")
-        st.subheader("🔍 Feature Importance")
+        st.divider()
+        st.subheader("🔧 Performance Drivers")
 
         fi_df = pd.DataFrame({
             "Feature": X.columns,
@@ -228,26 +266,31 @@ if st.button("🚀 Evaluate Model", use_container_width=True):
     # -------------------------------------------------
     # Confusion Matrix
     # -------------------------------------------------
-    st.markdown("---")
-    st.subheader("🧩 Confusion Matrix")
+    st.divider()
+    st.subheader("🧩 Prediction Breakdown")
 
     cm = confusion_matrix(y_true, y_pred)
 
-    fig, ax = plt.subplots(figsize=(4, 4))
-    sns.heatmap(
-        cm,
-        annot=True,
-        fmt="d",
-        cmap="Blues",
-        cbar=False,
-        ax=ax
-    )
-
-    ax.set_xlabel("Predicted Label")
-    ax.set_ylabel("True Label")
-    ax.set_title(f"Confusion Matrix – {selected_model_name}")
-
-    st.pyplot(fig)
-    plt.close(fig)
+    _, mid, _ = st.columns([1, 4, 1])
+    with mid:
+        fig, ax = plt.subplots(figsize=(4, 4))
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            cbar=False,
+            ax=ax
+        )
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("Actual")
+        st.pyplot(fig)
+        plt.close(fig)
 
     st.success("✅ Model evaluation completed successfully!")
+
+# -------------------------------------------------
+# Footer
+# -------------------------------------------------
+st.divider()
+st.caption("🏎️ Formula 1 Podium Prediction • ML Evaluation Dashboard")
