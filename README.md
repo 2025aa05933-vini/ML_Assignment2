@@ -41,6 +41,9 @@ The dataset is derived from publicly available Formula 1 historical data. Raw CS
 * **avg_finish_last_5_cat** – Average finishing position over last 5 races (categorised)
 * **podium_finish** – Target variable
 
+There are 12 features avaialabe including the y column
+And we use 1500 instances to train and 500 samples for testing
+
 The **raw test CSV used for evaluation and upload in the Streamlit app is located at:**
 `data/processed/f1_test.csv`
 
